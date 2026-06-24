@@ -1,0 +1,105 @@
+import React, { useState } from 'react';
+import { Menu, SlidersHorizontal, Send, Download, Smartphone, FileText, ChevronRight, ShieldCheck } from 'lucide-react';
+import { ScreenId, Transaction, TransactionType } from '../types';
+
+interface ActivityScreenProps {
+  transactions: Transaction[];
+  onNavigate: (screen: ScreenId) => void;
+  isBalanceHidden: boolean;
+}
+
+type FilterTab = 'all' | 'sent' | 'received' | 'bills';
+
+export function ActivityScreen({ transactions, onNavigate, isBalanceHidden }: ActivityScreenProps) {
+  const [activeTab, setActiveTab] = useState<FilterTab>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredTransactions = transactions.filter(t => {
+    if (activeTab === 'sent' && t.type !== 'sent') return false;
+    if (activeTab === 'received' && t.type !== 'received') return false;
+    if (activeTab === 'bills' && (t.type !== 'bill' && t.type !== 'topup')) return false;
+    if (searchQuery) {
+      return t.title.toLowerCase().includes(searchQuery.toLowerCase()) || t.subtitle.toLowerCase().includes(searchQuery.toLowerCase());
+    }
+    return true;
+  });
+
+  const getIcon = (type: TransactionType) => {
+    switch (type) {
+      case 'sent':
+        return <div className="w-9 h-9 rounded-full bg-rose-500/10 flex items-center justify-center border border-rose-500/20"><Send className="w-4 h-4 text-rose-500 rotate-45" /></div>;
+      case 'received':
+        return <div className="w-9 h-9 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20"><Download className="w-4 h-4 text-emerald-500" /></div>;
+      case 'topup':
+        return <div className="w-9 h-9 rounded-full bg-blue-500/10 flex items-center justify-center border border-blue-500/20"><Smartphone className="w-4 h-4 text-blue-500" /></div>;
+      case 'bill':
+        return <div className="w-9 h-9 rounded-full bg-purple-500/10 flex items-center justify-center border border-purple-500/20"><FileText className="w-4 h-4 text-purple-500" /></div>;
+    }
+  };
+
+  const formatAmount = (t: Transaction) => {
+    const formatted = new Intl.NumberFormat('en-KE', { minimumFractionDigits: 0 }).format(t.amount);
+    if (isBalanceHidden) return t.type === 'received' ? '+KES ••••' : '-KES ••••';
+    return t.type === 'received' ? `+KES ${formatted}` : `-KES ${formatted}`;
+  };
+
+  return (
+    <div className="h-full w-full bg-brand-navy flex flex-col p-5 overflow-y-auto select-none relative">
+      <div className="flex items-center justify-between mt-1 mb-4">
+        <button onClick={() => onNavigate('profile')} className="text-gray-400 hover:text-white p-1">
+          <Menu className="w-5 h-5" />
+        </button>
+        <span className="font-display font-semibold text-white text-base">Activity</span>
+        <button onClick={() => {
+          const query = prompt("Search transactions:");
+          if (query !== null) setSearchQuery(query);
+        }} className="text-gray-400 hover:text-white p-1">
+          <SlidersHorizontal className="w-5 h-5" />
+        </button>
+      </div>
+
+      <div className="bg-brand-card/60 p-1 rounded-xl flex gap-1 mb-4 border border-brand-blue/10">
+        {(['all', 'sent', 'received', 'bills'] as FilterTab[]).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`flex-1 text-center py-2 text-[11px] font-semibold rounded-lg capitalize transition-all ${activeTab === tab ? 'bg-brand-blue text-white shadow-md' : 'text-gray-400'}`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex-1 space-y-2.5 overflow-y-auto mb-4">
+        {filteredTransactions.map((t) => (
+          <div key={t.id} className="bg-brand-card/90 rounded-xl p-3 border border-brand-blue/10 flex items-center justify-between shadow-sm">
+            <div className="flex items-center gap-3">
+              {getIcon(t.type)}
+              <div className="flex flex-col text-left">
+                <span className="text-xs text-white font-semibold">{t.title}</span>
+                <span className="text-[9px] text-gray-400 mt-0.5 truncate max-w-[140px]">{t.subtitle}</span>
+              </div>
+            </div>
+            <div className="flex flex-col items-end text-right">
+              <span className={`text-xs font-bold font-mono ${t.type === 'received' ? 'text-emerald-500' : 'text-gray-200'}`}>
+                {formatAmount(t)}
+              </span>
+              <span className="text-[9px] text-gray-500 mt-0.5">{t.date}, {t.time}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div onClick={() => onNavigate('security')} className="bg-brand-card/70 rounded-xl p-3.5 border border-brand-blue/15 flex gap-3.5 items-center justify-between shadow-md mt-auto cursor-pointer">
+        <div className="flex gap-3 items-center">
+          <ShieldCheck className="w-8 h-8 text-brand-cyan" />
+          <div className="flex flex-col text-left">
+            <span className="text-xs text-white font-bold">100% Secure</span>
+            <p className="text-[9px] text-gray-400 mt-0.5 leading-tight">Your transactions are protected by Ciscolyn Shield.</p>
+          </div>
+        </div>
+        <ChevronRight className="w-4 h-4 text-gray-500" />
+      </div>
+    </div>
+  );
+}
