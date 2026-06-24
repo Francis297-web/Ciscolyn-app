@@ -1,0 +1,220 @@
+import React, { useState } from 'react';
+import { ArrowLeft, HelpCircle, User, Users, CheckCircle2, Loader2, Sparkles, AlertCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { ScreenId, Contact, WalletState } from '../types';
+
+interface SendMoneyScreenProps {
+  wallet: WalletState;
+  onNavigate: (screen: ScreenId) => void;
+  onSendMoney: (recipientPhone: string, recipientName: string, amount: number, note: string) => void;
+  contacts: Contact[];
+}
+
+export function SendMoneyScreen({ wallet, onNavigate, onSendMoney, contacts }: SendMoneyScreenProps) {
+  const [phone, setPhone] = useState('+254 700 123 456');
+  const [recipientName, setRecipientName] = useState('Ciscolyn User');
+  const [amountStr, setAmountStr] = useState('5,000.00');
+  const [note, setNote] = useState('Payment for services');
+  const [selectedMethod, setSelectedMethod] = useState<'simless' | 'cashpoint'>('simless');
+  
+  const [isContactPickerOpen, setIsContactPickerOpen] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const parsedAmount = parseFloat(amountStr.replace(/,/g, '')) || 0;
+
+  const handleSelectContact = (contact: Contact) => {
+    setPhone(contact.phone);
+    setRecipientName(contact.name);
+    setIsContactPickerOpen(false);
+  };
+
+  const handleAmountChange = (val: string) => {
+    const sanitized = val.replace(/[^0-9.]/g, '');
+    setAmountStr(sanitized);
+    if (parseFloat(sanitized) > wallet.balance) {
+      setError("Insufficient balance in your wallet");
+    } else {
+      setError(null);
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!phone) { setError("Please specify a recipient"); return; }
+    if (parsedAmount <= 0) { setError("Please specify an amount greater than 0"); return; }
+    if (parsedAmount > wallet.balance) { setError("Insufficient balance"); return; }
+
+    setError(null);
+    setIsSending(true);
+
+    setTimeout(() => {
+      setIsSending(false);
+      setIsSuccess(true);
+      setTimeout(() => {
+        onSendMoney(phone, recipientName, parsedAmount, note || 'Send Money');
+        setIsSuccess(false);
+        onNavigate('activity');
+      }, 1800);
+    }, 1500);
+  };
+
+  const formatBalance = (val: number) => {
+    return new Intl.NumberFormat('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val);
+  };
+
+  return (
+    <div className="h-full w-full bg-brand-navy flex flex-col p-5 overflow-y-auto select-none relative">
+      <div className="flex items-center justify-between mt-1 mb-5">
+        <button onClick={() => onNavigate('home')} className="text-gray-400 hover:text-white p-1">
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <span className="font-display font-semibold text-white text-base">Send Money</span>
+        <button onClick={() => alert("Transactions over the Simless Network require no cellular internet.")} className="text-gray-400 hover:text-white p-1">
+          <HelpCircle className="w-5 h-5" />
+        </button>
+      </div>
+
+      <form onSubmit={handleSubmit} className="flex-1 flex flex-col justify-between">
+        <div className="space-y-4">
+          <div className="space-y-1.5 text-left">
+            <label className="text-gray-400 text-[11px] font-semibold uppercase tracking-wider block pl-1">Recipient</label>
+            <div className="bg-brand-card rounded-xl p-3 border border-brand-blue/15 flex items-center justify-between">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <div className="w-10 h-10 rounded-full bg-brand-blue/10 flex items-center justify-center border border-brand-blue/20">
+                  <User className="w-5 h-5 text-brand-cyan" />
+                </div>
+                <div className="flex-1 min-w-0 text-left">
+                  <input 
+                    type="text" 
+                    value={phone}
+                    onChange={(e) => {
+                      setPhone(e.target.value);
+                      setRecipientName('Custom Recipient');
+                    }}
+                    className="bg-transparent text-white font-mono font-bold text-sm tracking-wide w-full focus:outline-none"
+                  />
+                  <div className="text-[10px] text-gray-400 mt-0.5">{recipientName}</div>
+                </div>
+              </div>
+              <button type="button" onClick={() => setIsContactPickerOpen(true)} className="text-brand-blue hover:text-brand-cyan p-1.5">
+                <Users className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-1.5 text-left">
+            <label className="text-gray-400 text-[11px] font-semibold uppercase tracking-wider block pl-1">Amount</label>
+            <div className="bg-brand-card rounded-xl p-4 border border-brand-blue/15 shadow-md">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-brand-cyan font-mono font-bold text-sm">KES</span>
+                <input 
+                  type="text" 
+                  value={amountStr}
+                  onChange={(e) => handleAmountChange(e.target.value)}
+                  className="bg-transparent text-white font-display font-bold text-2xl tracking-tight text-right w-2/3 focus:outline-none"
+                />
+              </div>
+              <div className="flex items-center justify-between border-t border-brand-blue/10 pt-2 text-[10px]">
+                <span className="text-gray-500">Available: KES {formatBalance(wallet.balance)}</span>
+                <button type="button" onClick={() => handleAmountChange(wallet.balance.toFixed(2))} className="text-brand-blue hover:text-brand-cyan font-bold uppercase tracking-wider">Use Max</button>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-1.5 text-left">
+            <label className="text-gray-400 text-[11px] font-semibold uppercase tracking-wider block pl-1">Note (Optional)</label>
+            <div className="bg-brand-card rounded-xl p-3 border border-brand-blue/15">
+              <input type="text" value={note} onChange={(e) => setNote(e.target.value)} className="bg-transparent text-white text-xs w-full focus:outline-none" />
+            </div>
+          </div>
+
+          <div className="space-y-2 pt-1 text-left">
+            <label className="text-gray-400 text-[11px] font-semibold uppercase tracking-wider block pl-1">Choose Payment Method</label>
+            <div className="space-y-2.5">
+              <div onClick={() => setSelectedMethod('simless')} className={`rounded-xl p-3 border transition-all cursor-pointer flex items-center justify-between ${selectedMethod === 'simless' ? 'bg-brand-blue/5 border-brand-blue' : 'bg-brand-card/60 border-brand-blue/10'}`}>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-brand-blue flex items-center justify-center font-bold text-xs text-white">C</div>
+                  <div className="flex flex-col text-left">
+                    <span className="text-xs text-white font-bold">Ciscolyn Simless Network</span>
+                    <span className="text-[9px] text-gray-400 mt-0.5">Secure • Fast • Simless</span>
+                  </div>
+                </div>
+                <div className="bg-brand-blue/20 text-brand-cyan text-[8px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Recommended</div>
+              </div>
+
+              <div onClick={() => setSelectedMethod('cashpoint')} className={`rounded-xl p-3 border transition-all cursor-pointer flex items-center justify-between ${selectedMethod === 'cashpoint' ? 'bg-brand-blue/5 border-brand-blue' : 'bg-brand-card/60 border-brand-blue/10'}`}>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-brand-cyan/10 border border-brand-cyan/20 flex items-center justify-center"><Sparkles className="w-4 h-4 text-brand-cyan" /></div>
+                  <div className="flex flex-col text-left">
+                    <span className="text-xs text-white font-bold">Ciscolyn Cash Point</span>
+                    <span className="text-[9px] text-gray-400 mt-0.5">Pay at any agent terminal</span>
+                  </div>
+                </div>
+                <CheckCircle2 className={`w-4 h-4 ${selectedMethod === 'cashpoint' ? 'text-brand-cyan' : 'text-gray-600'}`} />
+              </div>
+            </div>
+          </div>
+
+          {error && (
+            <div className="flex items-center gap-2 text-rose-500 bg-rose-500/10 p-3 rounded-xl border border-rose-500/20 text-xs">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+        </div>
+
+        <button type="submit" disabled={isSending} className="w-full bg-gradient-to-r from-brand-blue to-brand-cyan text-white text-xs font-bold py-3 px-4 rounded-xl flex items-center justify-between mt-4 glow-btn shrink-0">
+          <span>Send Money</span>
+          <span className="bg-white/10 px-2 py-1 rounded text-[9px] font-mono">
+            {wallet.isBalanceHidden ? 'KES •••••' : `KES ${formatBalance(parsedAmount)}`}
+          </span>
+        </button>
+      </form>
+
+      {/* Slide-Up Contacts Selector Overlay */}
+      <AnimatePresence>
+        {isContactPickerOpen && (
+          <div className="absolute inset-0 bg-black/60 z-30 flex items-end justify-center">
+            <div className="absolute inset-0" onClick={() => setIsContactPickerOpen(false)}></div>
+            <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} className="bg-brand-card w-full rounded-t-3xl border-t border-brand-blue/30 p-5 relative z-40 max-h-[80%] flex flex-col">
+              <h3 className="font-display font-bold text-white text-sm mb-3">Select Recipient</h3>
+              <div className="overflow-y-auto space-y-2 flex-1 pb-4">
+                {contacts.map((contact) => (
+                  <button key={contact.id} onClick={() => handleSelectContact(contact)} className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-brand-card-light transition-colors text-left">
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs text-white" style={{ backgroundColor: contact.avatarColor }}>{contact.initials}</div>
+                    <div className="flex flex-col">
+                      <span className="text-xs text-white font-semibold">{contact.name}</span>
+                      <span className="text-[10px] text-gray-400 font-mono mt-0.5">{contact.phone}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isSending && (
+          <div className="absolute inset-0 bg-brand-navy/95 z-50 flex flex-col items-center justify-center p-6">
+            <Loader2 className="w-12 h-12 text-brand-cyan animate-spin mb-4" />
+            <span className="text-white font-display text-sm font-semibold animate-pulse">Encrypting Simless Payload...</span>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isSuccess && (
+          <div className="absolute inset-0 bg-brand-navy/98 z-50 flex flex-col items-center justify-center p-6">
+            <CheckCircle2 className="w-16 h-16 text-brand-cyan mb-5 animate-bounce" />
+            <h3 className="text-white font-display text-base font-bold">Transaction Successful</h3>
+            <p className="text-gray-400 text-xs mt-2">Sent <span className="text-brand-cyan font-semibold font-mono">KES {formatBalance(parsedAmount)}</span> to</p>
+            <p className="text-white text-xs font-semibold mt-1 font-mono">{phone}</p>
+          </div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
