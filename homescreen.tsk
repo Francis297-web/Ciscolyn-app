@@ -1,0 +1,137 @@
+import React from 'react';
+import { Shield, Eye, EyeOff, Send, Download, FileText, Smartphone, Clock, Users, ShieldAlert, ChevronRight, Bell, Menu } from 'lucide-react';
+import { ScreenId, WalletState } from '../types';
+
+interface HomeScreenProps {
+  wallet: WalletState;
+  onToggleBalance: () => void;
+  onNavigate: (screen: ScreenId) => void;
+  onSimulateIncoming: () => void;
+}
+
+export function HomeScreen({ wallet, onToggleBalance, onNavigate, onSimulateIncoming }: HomeScreenProps) {
+  const formatBalance = (val: number) => {
+    return new Intl.NumberFormat('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val);
+  };
+
+  return (
+    <div className="h-full w-full bg-brand-navy flex flex-col p-5 overflow-y-auto select-none relative">
+      <div className="flex items-center justify-between mt-1 mb-4">
+        <button onClick={() => onNavigate('profile')} className="text-gray-400 hover:text-white p-1">
+          <Menu className="w-5 h-5" />
+        </button>
+        <span className="font-display font-bold text-white text-sm tracking-widest">CISCOLYN</span>
+        <button onClick={onSimulateIncoming} className="text-gray-400 hover:text-white relative p-1">
+          <Bell className="w-5 h-5" />
+          <span className="absolute top-1 right-1 w-2 h-2 bg-brand-cyan rounded-full animate-ping"></span>
+        </button>
+      </div>
+
+      {/* Network alert */}
+      <div className="bg-brand-card/90 rounded-2xl p-4 border border-brand-blue/20 flex gap-4 items-center mb-5 shadow-lg relative">
+        <div className="w-12 h-12 shrink-0 rounded-xl bg-brand-blue/10 flex items-center justify-center border border-brand-blue/30 relative">
+          <Shield className="w-6 h-6 text-brand-cyan" />
+          <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-[#10B981] rounded-full flex items-center justify-center border-2 border-brand-card">
+            <span className="text-[7px] text-white font-bold">✓</span>
+          </div>
+        </div>
+        <div className="flex flex-col text-left">
+          <span className="text-white text-[13px] font-bold">Simless. Seamless. Secure.</span>
+          <span className="text-gray-400 text-[10px] mt-0.5">You are connected without a SIM</span>
+          <div className="flex items-center gap-1 mt-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse"></span>
+            <span className="text-brand-cyan text-[9px] font-semibold uppercase tracking-wider">Ciscolyn Network</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Balance Card */}
+      <div className="bg-brand-card rounded-2xl p-5 border border-brand-blue/20 mb-5 shadow-xl relative overflow-hidden flex flex-col justify-between">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-gray-400 text-[11px] uppercase tracking-wider font-medium">Wallet Balance</span>
+          <button onClick={onToggleBalance} className="text-gray-400 hover:text-white p-1">
+            {wallet.isBalanceHidden ? <EyeOff className="w-4 h-4 text-brand-cyan" /> : <Eye className="w-4 h-4" />}
+          </button>
+        </div>
+
+        <div className="mb-4 text-left">
+          <span className="text-gray-400 text-xs font-mono font-semibold mr-1.5">KES</span>
+          <span className="text-white text-2xl font-display font-bold">
+            {wallet.isBalanceHidden ? '•••••••' : formatBalance(wallet.balance)}
+          </span>
+        </div>
+
+        <div className="flex items-end justify-between mt-1 text-left">
+          <div className="flex flex-col">
+            <span className="text-[10px] text-gray-400">Available Balance</span>
+            <span className="text-[10px] font-semibold text-brand-cyan mt-0.5 font-mono">
+              {wallet.isBalanceHidden ? 'KES •••••••' : `KES ${formatBalance(wallet.balance)}`}
+            </span>
+          </div>
+
+          <div className="w-28 h-8 shrink-0">
+            <svg viewBox="0 0 100 30" className="w-full h-full filter drop-shadow-[0_0_4px_rgba(0,210,255,0.6)]">
+              <path d="M 0,30 Q 15,20 30,22 T 60,10 T 90,14 T 100,5" fill="none" stroke="#00D2FF" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      {/* Grid Quick Actions */}
+      <div className="grid grid-cols-4 gap-3 mb-6">
+        <button onClick={() => onNavigate('send')} className="flex flex-col items-center">
+          <div className="w-12 h-12 rounded-xl bg-brand-card hover:bg-brand-card-light border border-brand-blue/20 flex items-center justify-center transition-all">
+            <Send className="w-5 h-5 text-brand-blue" />
+          </div>
+          <span className="text-[10px] text-gray-300 font-medium mt-1.5 text-center leading-tight">Send<br/>Money</span>
+        </button>
+        <button onClick={onSimulateIncoming} className="flex flex-col items-center">
+          <div className="w-12 h-12 rounded-xl bg-brand-card hover:bg-brand-card-light border border-brand-blue/20 flex items-center justify-center transition-all">
+            <Download className="w-5 h-5 text-brand-blue" />
+          </div>
+          <span className="text-[10px] text-gray-300 font-medium mt-1.5 text-center leading-tight">Receive<br/>Money</span>
+        </button>
+        <button onClick={() => alert("Bill Payment Simulation initiated")} className="flex flex-col items-center">
+          <div className="w-12 h-12 rounded-xl bg-brand-card hover:bg-brand-card-light border border-brand-blue/20 flex items-center justify-center transition-all">
+            <FileText className="w-5 h-5 text-brand-blue" />
+          </div>
+          <span className="text-[10px] text-gray-300 font-medium mt-1.5 text-center leading-tight">Pay<br/>Bills</span>
+        </button>
+        <button onClick={() => alert("Airtime Topup Simulation initiated")} className="flex flex-col items-center">
+          <div className="w-12 h-12 rounded-xl bg-brand-card hover:bg-brand-card-light border border-brand-blue/20 flex items-center justify-center transition-all">
+            <Smartphone className="w-5 h-5 text-brand-blue" />
+          </div>
+          <span className="text-[10px] text-gray-300 font-medium mt-1.5 text-center leading-tight">Airtime<br/>Topup</span>
+        </button>
+      </div>
+
+      {/* Quick Actions List */}
+      <div className="flex flex-col text-left">
+        <h4 className="text-gray-400 text-[11px] font-semibold uppercase tracking-wider mb-2">Quick Actions</h4>
+        <div className="bg-brand-card rounded-2xl border border-brand-blue/15 divide-y divide-brand-blue/10 overflow-hidden">
+          <button onClick={() => onNavigate('activity')} className="w-full flex items-center justify-between p-3.5 hover:bg-brand-card-light/50 transition-colors">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-brand-blue/10 flex items-center justify-center border border-brand-blue/20"><Clock className="w-4 h-4 text-brand-blue" /></div>
+              <span className="text-xs text-white font-medium">Transaction History</span>
+            </div>
+            <ChevronRight className="w-4 h-4 text-gray-500" />
+          </button>
+          <button onClick={() => onNavigate('contacts')} className="w-full flex items-center justify-between p-3.5 hover:bg-brand-card-light/50 transition-colors">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-brand-blue/10 flex items-center justify-center border border-brand-blue/20"><Users className="w-4 h-4 text-brand-blue" /></div>
+              <span className="text-xs text-white font-medium">Saved Contacts</span>
+            </div>
+            <ChevronRight className="w-4 h-4 text-gray-500" />
+          </button>
+          <button onClick={() => onNavigate('security')} className="w-full flex items-center justify-between p-3.5 hover:bg-brand-card-light/50 transition-colors">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-brand-blue/10 flex items-center justify-center border border-brand-blue/20"><ShieldAlert className="w-4 h-4 text-brand-blue" /></div>
+              <span className="text-xs text-white font-medium">Security Center</span>
+            </div>
+            <ChevronRight className="w-4 h-4 text-gray-500" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
