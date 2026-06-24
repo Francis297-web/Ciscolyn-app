@@ -1,0 +1,62 @@
+import React from 'react';
+
+interface CiscolynLogoProps {
+  className?: string;
+  size?: 'sm' | 'md' | 'lg';
+  hideText?: boolean;
+}
+
+export function CiscolynLogo({ className = '', size = 'md', hideText = false }: CiscolynLogoProps) {
+  const sizeClasses = {
+    sm: { svg: 'w-8 h-8', textTitle: 'text-lg', textSub: 'text-[7px]' },
+    md: { svg: 'w-12 h-12', textTitle: 'text-2xl', textSub: 'text-[9px]' },
+    lg: { svg: 'w-16 h-16', textTitle: 'text-3xl', textSub: 'text-[11px]' }
+  };
+
+  const currentSize = sizeClasses[size];
+
+  return (
+    <div className={`flex items-center gap-3 select-none ${className}`}>
+      <div className={`relative ${currentSize.svg} shrink-0`}>
+        <div className="absolute inset-0 bg-brand-blue/30 rounded-full blur-md animate-pulse"></div>
+        <svg
+          viewBox="0 0 100 100"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          className="w-full h-full relative z-10 filter drop-shadow-[0_0_8px_rgba(0,163,255,0.6)]"
+        >
+          <circle cx="50" cy="50" r="42" stroke="url(#logo-grad-outer)" strokeWidth="6" strokeLinecap="round" strokeDasharray="210 50" />
+          <path
+            d="M 68 32 C 60 22, 40 22, 32 32 C 22 42, 22 58, 32 68 C 40 78, 60 78, 68 68"
+            stroke="url(#logo-grad-inner)"
+            strokeWidth="10"
+            strokeLinecap="round"
+          />
+          <circle cx="50" cy="50" r="8" fill="#00E0FF" className="animate-pulse" />
+          <defs>
+            <linearGradient id="logo-grad-outer" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#00A3FF" />
+              <stop offset="100%" stopColor="#00E0FF" />
+            </linearGradient>
+            <linearGradient id="logo-grad-inner" x1="20" y1="20" x2="80" y2="80" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#0055FF" />
+              <stop offset="50%" stopColor="#00A3FF" />
+              <stop offset="100%" stopColor="#00E0FF" />
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+
+      {!hideText && (
+        <div className="flex flex-col items-start leading-none">
+          <span className={`font-display font-bold tracking-wider text-white ${currentSize.textTitle}`}>
+            CISCOLYN
+          </span>
+          <span className={`font-sans tracking-[0.18em] text-brand-cyan/80 font-medium mt-0.5 uppercase ${currentSize.textSub}`}>
+            Simless Transactions
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
