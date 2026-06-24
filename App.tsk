@@ -1,0 +1,158 @@
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Smartphone, ShieldCheck, CreditCard, RefreshCw, Zap, Globe, Bell, CheckCircle2, AlertCircle, Info } from 'lucide-react';
+
+import { ScreenId, WalletState, Contact, Transaction } from './types';
+import { PhoneSimulator } from './components/PhoneSimulator';
+import { CiscolynLogo } from './components/CiscolynLogo';
+import { LandingScreen } from './components/LandingScreen';
+import { HomeScreen } from './components/HomeScreen';
+import { SendMoneyScreen } from './components/SendMoneyScreen';
+import { ActivityScreen } from './components/ActivityScreen';
+import { ScanScreen, RewardsScreen, ProfileScreen, ContactsScreen, SecurityCenterScreen } from './components/ExtraScreens';
+
+const DEFAULT_TRANSACTIONS: Transaction[] = [
+  { id: 'tx-1', type: 'sent', title: 'Money Sent', subtitle: 'To: +254 700 123 456', amount: 5000, time: '10:24 AM', date: 'Today' },
+  { id: 'tx-2', type: 'received', title: 'Money Received', subtitle: 'From: +254 712 345 678', amount: 10000, time: '09:15 AM', date: 'Today' },
+  { id: 'tx-3', type: 'topup', title: 'Airtime Topup', subtitle: 'Safaricom', amount: 500, time: '06:45 PM', date: 'Yesterday' },
+  { id: 'tx-4', type: 'bill', title: 'Bill Payment', subtitle: 'KPLC Token', amount: 1200, time: '04:30 PM', date: 'Yesterday' },
+  { id: 'tx-5', type: 'received', title: 'Money Received', subtitle: 'From: +254 733 222 111', amount: 2500, time: '11:12 AM', date: 'Yesterday' }
+];
+
+const DEFAULT_CONTACTS: Contact[] = [
+  { id: 'c-1', name: 'Ciscolyn User', phone: '+254 700 123 456', initials: 'CU', avatarColor: '#00A3FF' },
+  { id: 'c-2', name: 'Alice Kamau', phone: '+254 712 345 678', initials: 'AK', avatarColor: '#10B981' },
+  { id: 'c-3', name: 'Bob Mwangi', phone: '+254 733 222 111', initials: 'BM', avatarColor: '#8B5CF6' }
+];
+
+export default function App() {
+  const [activeScreen, setActiveScreen] = useState<ScreenId>('landing');
+  const [wallet, setWallet] = useState<WalletState>({
+    balance: 24500.00,
+    isBalanceHidden: false,
+    transactions: DEFAULT_TRANSACTIONS
+  });
+  const [contacts, setContacts] = useState<Contact[]>(DEFAULT_CONTACTS);
+  const [toast, setToast] = useState<{ message: string; sub: string; type: 'success' | 'info' } | null>(null);
+
+  const showToast = (message: string, sub: string, type: 'success' | 'info' = 'success') => {
+    setToast({ message, sub, type });
+    setTimeout(() => { setToast(null); }, 4500);
+  };
+
+  const handleToggleBalance = () => {
+    setWallet(prev => ({ ...prev, isBalanceHidden: !prev.isBalanceHidden }));
+  };
+
+  const handleResetState = () => {
+    setWallet({ balance: 24500.00, isBalanceHidden: false, transactions: DEFAULT_TRANSACTIONS });
+    setContacts(DEFAULT_CONTACTS);
+  };
+
+  const handleSendMoney = (phone: string, name: string, amount: number, note: string) => {
+    const newTx: Transaction = {
+      id: `tx-sent-${Date.now()}`,
+      type: 'sent',
+      title: 'Money Sent',
+      subtitle: `To: ${phone} (${name})`,
+      amount,
+      time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+      date: 'Today'
+    };
+    setWallet(prev => ({ ...prev, balance: prev.balance - amount, transactions: [newTx, ...prev.transactions] }));
+    showToast(`Transaction Completed`, `KES ${amount.toLocaleString()} sent successfully.`);
+  };
+
+  const handleSimulateIncoming = () => {
+    const chosenAmount = 7500;
+    const chosenContact = contacts[0];
+    const newTx: Transaction = {
+      id: `tx-rec-${Date.now()}`,
+      type: 'received',
+      title: 'Money Received',
+      subtitle: `From: ${chosenContact.phone} (${chosenContact.name})`,
+      amount: chosenAmount,
+      time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+      date: 'Today'
+    };
+    setWallet(prev => ({ ...prev, balance: prev.balance + chosenAmount, transactions: [newTx, ...prev.transactions] }));
+    showToast(`Received KES ${chosenAmount.toLocaleString()}`, `From ${chosenContact.name}`);
+  };
+
+  return (
+    <div className="min-h-screen bg-brand-bg text-white font-sans flex flex-col justify-between overflow-x-hidden relative">
+      <div className="absolute top-0 left-1/4 w-[500px] h-[300px] bg-brand-blue/10 rounded-full blur-[120px] pointer-events-none"></div>
+
+      <div className="w-full max-w-7xl mx-auto px-4 py-12 flex-1 flex flex-col justify-center">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+          
+          <div className="col-span-1 lg:col-span-7 flex flex-col justify-center space-y-6 text-left">
+            <CiscolynLogo size="md" />
+
+            <div className="space-y-4">
+              <h1 className="font-display font-extrabold text-4xl leading-tight">
+                The Future of <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-blue via-brand-cyan to-white uppercase">SIMLESS Payments</span>
+              </h1>
+              <p className="text-gray-400 text-sm max-w-lg">Make secure transactions, send money and pay bills — all without a physical SIM card. Experience absolute cloud utility freedom.</p>
+            </div>
+
+            <AnimatePresence>
+              {toast && (
+                <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="bg-brand-card border-l-4 border-brand-cyan rounded-r-xl p-4 flex gap-3 max-w-md glow-border">
+                  <CheckCircle2 className="w-5 h-5 text-brand-cyan shrink-0 mt-0.5" />
+                  <div className="flex flex-col">
+                    <span className="text-white text-xs font-bold leading-none">{toast.message}</span>
+                    <span className="text-gray-400 text-[10px] mt-1">{toast.sub}</span>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-brand-card/50 p-3 rounded-xl border border-brand-blue/10 flex items-center gap-2"><Smartphone className="w-4 h-4 text-brand-blue" /><div className="text-[10px] font-bold">NO SIM REQUIRED</div></div>
+              <div className="bg-brand-card/50 p-3 rounded-xl border border-brand-blue/10 flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-brand-blue" /><div className="text-[10px] font-bold">SECURE & PRIVATE</div></div>
+              <div className="bg-brand-card/50 p-3 rounded-xl border border-brand-blue/10 flex items-center gap-2"><Zap className="w-4 h-4 text-brand-blue" /><div className="text-[10px] font-bold">FAST & RELIABLE</div></div>
+              <div className="bg-brand-card/50 p-3 rounded-xl border border-brand-blue/10 flex items-center gap-2"><Globe className="w-4 h-4 text-brand-blue" /><div className="text-[10px] font-bold">WORKS EVERYWHERE</div></div>
+            </div>
+
+            {/* CONTROL PANEL */}
+            <div className="bg-brand-card/30 rounded-2xl p-4 border border-brand-blue/15 space-y-3.5 max-w-xl">
+              <div className="flex items-center gap-2"><Info className="w-4 h-4 text-brand-cyan" /><h4 className="text-xs font-bold">Simulator Control Deck</h4></div>
+              <div className="flex gap-2.5">
+                <button onClick={handleSimulateIncoming} className="bg-brand-blue text-white text-[10px] font-bold py-2 px-3 rounded-lg flex items-center gap-1"><Bell className="w-3 h-3" /> Receive Money</button>
+                <button onClick={handleToggleBalance} className="bg-brand-card border border-brand-blue/20 text-brand-cyan text-[10px] font-bold py-2 px-3 rounded-lg">Mask Balance</button>
+                <button onClick={handleResetState} className="bg-brand-card border border-rose-500/20 text-rose-400 text-[10px] font-bold py-2 px-3 rounded-lg">Reset App</button>
+              </div>
+              <div className="pt-2 border-t border-brand-blue/10">
+                <span className="text-[9px] text-gray-500 font-bold block mb-1">Direct Nav:</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {(['landing', 'home', 'send', 'activity', 'contacts', 'security'] as ScreenId[]).map((scr) => (
+                    <button key={scr} onClick={() => setActiveScreen(scr)} className={`px-2 py-1 rounded text-[8px] font-bold border ${activeScreen === scr ? 'bg-brand-cyan/20 border-brand-cyan text-brand-cyan' : 'border-brand-blue/10 text-gray-400'}`}>
+                      {scr === 'landing' ? 'Splash Screen' : scr}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="col-span-1 lg:col-span-5 flex justify-center items-center">
+            <PhoneSimulator activeScreen={activeScreen} onNavigate={setActiveScreen}>
+              {activeScreen === 'landing' && <LandingScreen onEnterApp={() => setActiveScreen('home')} />}
+              {activeScreen === 'home' && <HomeScreen wallet={wallet} onToggleBalance={handleToggleBalance} onNavigate={setActiveScreen} onSimulateIncoming={handleSimulateIncoming} />}
+              {activeScreen === 'send' && <SendMoneyScreen wallet={wallet} onNavigate={setActiveScreen} onSendMoney={handleSendMoney} contacts={contacts} />}
+              {activeScreen === 'activity' && <ActivityScreen transactions={wallet.transactions} onNavigate={setActiveScreen} isBalanceHidden={wallet.isBalanceHidden} />}
+              {activeScreen === 'scan' && <ScanScreen onNavigate={setActiveScreen} />}
+              {activeScreen === 'rewards' && <RewardsScreen onNavigate={setActiveScreen} />}
+              {activeScreen === 'profile' && <ProfileScreen onNavigate={setActiveScreen} wallet={wallet} onReset={handleResetState} />}
+              {activeScreen === 'contacts' && <ContactsScreen onNavigate={setActiveScreen} contacts={contacts} onAddContact={(n, p) => setContacts(prev => [...prev, { id: `${Date.now()}`, name: n, phone: p, initials: 'C', avatarColor: '#00A3FF' }])} onNavigateToSend={(p, n) => { setActiveScreen('send'); }} />}
+              {activeScreen === 'security' && <SecurityCenterScreen onNavigate={setActiveScreen} />}
+            </PhoneSimulator>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+}
